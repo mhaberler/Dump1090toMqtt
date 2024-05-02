@@ -1,5 +1,8 @@
 # Dump1090toMQTT
 
+
+![Logo](logo.jpg)
+    
 ## Overview
 
 Dump1090toMQTT is a Python script that monitors data from a dump1090 server, which provides information about airplanes, and publishes this data to an MQTT broker for further processing. The script can be run as a service, continuously collecting data and publishing it to the MQTT broker.
@@ -98,6 +101,4 @@ To run the script as a service, follow these steps:
 
    Now your script will run as a service and automatically start whenever your system boots up.
 
-## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
