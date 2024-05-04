@@ -81,6 +81,9 @@ def main():
     # Get MQTT configuration
     mqtt_host = config.get('mqtt', 'host')
     mqtt_port = config.getint('mqtt', 'port')
+    #get username and password if they exist
+    mqtt_username = config.get('mqtt', 'username', fallback=None)
+    mqtt_password = config.get('mqtt', 'password', fallback=None)
 
     # Create a socket object
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
