@@ -3,6 +3,8 @@ import json
 import time
 import paho.mqtt.client as mqtt
 import configparser
+import random
+import logging
 
 class PlaneData:
     def __init__(self):
@@ -63,6 +65,30 @@ def process_data(data, planes, mqtt_client):
             # If data format is not as expected, skip processing this line
             continue
 
+FIRST_RECONNECT_DELAY = 1
+RECONNECT_RATE = 2
+MAX_RECONNECT_COUNT = 12
+MAX_RECONNECT_DELAY = 60
+
+def on_disconnect(client, userdata, disconnect_flags, reason_code, properties):
+    print(f"Disconnected with result code: {reason_code}")
+    reconnect_count, reconnect_delay = 0, FIRST_RECONNECT_DELAY
+    while reconnect_count < MAX_RECONNECT_COUNT:
+        print(f"Reconnecting in {reconnect_delay} seconds...")
+        time.sleep(reconnect_delay)
+
+        try:
+            client.reconnect()
+            print("Reconnected successfully!")
+            return
+        except Exception as err:
+            print(f"{err} Reconnect failed. Retrying...")
+
+        reconnect_delay *= RECONNECT_RATE
+        reconnect_delay = min(reconnect_delay, MAX_RECONNECT_DELAY)
+        reconnect_count += 1
+    print(f"Reconnect failed after {reconnect_count} attempts. Exiting...")
+
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Connected to MQTT broker")
@@ -92,9 +118,14 @@ def main():
     planes = {}
 
     # Connect to MQTT broker
-    mqtt_client = mqtt.Client()
+    client_id = f'dump1090-mqtt-{random.randint(0, 1000)}'
+    
+    mqtt_client = mqtt.Client(client_id=client_id,callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
+    mqtt_client.username_pw_set(mqtt_username, mqtt_password)
     mqtt_client.on_connect = on_connect
-    mqtt_client.connect(mqtt_host, mqtt_port, 60)
+    mqtt_client.on_disconnect = on_disconnect
+
+    mqtt_client.connect(mqtt_host, mqtt_port)
 
     try:
         # Connect to dump1090
@@ -108,6 +139,7 @@ def main():
 
             # Process the received data
             if data:
+                #print(data)
                 process_data(data, planes, mqtt_client)
                 time.sleep(0.1)  # Delay to avoid flooding MQTT broker
 
